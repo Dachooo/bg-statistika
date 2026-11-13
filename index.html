@@ -44,6 +44,8 @@ header h1{font-size:20px;margin:0;flex:1;letter-spacing:-.01em}
 .streak{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;background:var(--soft);font-size:13px}
 .bar2{display:flex;height:8px;border-radius:99px;overflow:hidden;margin-top:12px;background:var(--soft)}
 .bar2 div{height:100%}
+.period{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;width:100%}
+.period select{flex:1;max-width:340px;font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
 .updated{color:var(--muted);font-size:12px}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -112,7 +114,11 @@ var RACES={BEAST:'Zveri',DEMON:'Demoni',DRAGON:'Zmajevi',MECHANICAL:'Mehovi',MEC
   ELEMENTAL:'Elementali',QUILBOAR:'Kvilboari',NAGA:'Nage',UNDEAD:'Nemrtvi',ABERRATION:'Aberacije',ALL:'Svi tipovi',MIXED:'Mešano'};
 var SERVER='https://script.google.com/macros/s/AKfycbxb6479VB_5rPAxIpuE5uW3zy7kVhzDEGq1iMOGcQm-dSL1KZlsol7PQaLqL06o-AM/exec';
 var GAS=!!(window.google&&google.script&&google.script.run);
-var state={data:null,mode:'shared',open:{},updated:null};
+var state={data:null,mode:'shared',day:'all',open:{},updated:null};
+var DAYS=['Nedelja','Ponedeljak','Utorak','Sreda','Četvrtak','Petak','Subota'];
+// a "gaming day" runs 06:00-06:00 local, so a session past midnight stays on one day
+function dayKey(iso){ var d=new Date(new Date(iso).getTime()-6*3600e3); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function dayLabel(k){ var p=k.split('-'), d=new Date(+p[0],+p[1]-1,+p[2]); return DAYS[d.getDay()]+', '+(+p[2])+'.'+(+p[1])+'.'+p[0]+'.'; }
 try{ var m=localStorage.getItem('bg_mode'); if(m==='all'||m==='shared') state.mode=m; }catch(e){}
 
 // ---------- theme ----------
@@ -208,12 +214,23 @@ function render(){
   var A=P[0], B=P[1], h='';
   var cls=['pa','pb'];
 
+  // period: overall or one gaming day
+  var days={}, dayList=[];
+  M.groups.forEach(function(G){ var k=dayKey(G.end); if(!days[k]){ days[k]=0; dayList.push(k); } days[k]++; });
+  dayList.sort().reverse();
+  if(state.day!=='all' && !days[state.day]) state.day='all';
+  if(state.day!=='all') M.groups=M.groups.filter(function(G){ return dayKey(G.end)===state.day; });
+  h+='<div class="toolbar"><label class="period">Period: <select id="day"><option value="all"'+(state.day==='all'?' selected':'')+'>Ukupno (sve partije)</option>'+
+     dayList.map(function(k){ return '<option value="'+k+'"'+(state.day===k?' selected':'')+'>'+dayLabel(k)+' ('+days[k]+')</option>'; }).join('')+
+     '</select></label></div>';
+  var periodTxt=state.day==='all'?'ukupno':dayLabel(state.day);
+
   // head to head
   var shared=M.groups.filter(function(G){return G.shared;});
   var wa=0,wb=0; shared.forEach(function(G){ if(G.winner===A) wa++; else if(G.winner===B) wb++; });
   var streakP=null, streakN=0;
   for(var i=0;i<shared.length;i++){ var w=shared[i].winner; if(!w) break; if(streakP===null){streakP=w;streakN=1;} else if(w===streakP) streakN++; else break; }
-  h+='<div class="card"><h2>Međusobni skor</h2>';
+  h+='<div class="card"><h2>Međusobni skor · '+esc(periodTxt)+'</h2>';
   if(B){
     h+='<div class="score"><div><div class="name pa">'+esc(shortName(A))+'</div></div><div></div><div><div class="name pb">'+esc(shortName(B))+'</div></div>'+
        '<div class="num pa">'+wa+'</div><div class="sep">:</div><div class="num pb">'+wb+'</div></div>';
@@ -303,6 +320,9 @@ function render(){
 
 function showUpdated(){ var u=document.getElementById('upd'); if(u&&state.updated) u.textContent='Osveženo '+pad(state.updated.getHours())+':'+pad(state.updated.getMinutes())+':'+pad(state.updated.getSeconds()); }
 
+document.getElementById('app').addEventListener('change',function(ev){
+  if(ev.target.id==='day'){ state.day=ev.target.value; render(); }
+});
 document.getElementById('app').addEventListener('click',function(ev){
   var t=ev.target.closest('button'); if(!t) return;
   if(t.dataset.mode){ state.mode=t.dataset.mode; try{localStorage.setItem('bg_mode',state.mode);}catch(e){} render(); }
