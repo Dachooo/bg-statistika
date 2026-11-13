@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BG Statistika</title>
+<style>
+:root{
+  --bg:#f4f5f8; --card:#ffffff; --text:#1b1d24; --muted:#6a7080; --line:#e3e6ee; --soft:#eef0f5;
+  --a:#2f6fdb; --a-soft:#dfe9fb; --b:#d9622b; --b-soft:#fbe6dc; --win:#1f9d55; --danger:#c93636;
+  --shadow:0 1px 2px rgba(20,25,40,.06),0 2px 8px rgba(20,25,40,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111318; --card:#1a1d24; --text:#e7e9ef; --muted:#9097a8; --line:#2a2f3a; --soft:#222631;
+    --a:#6b9bff; --a-soft:#1f2c47; --b:#ff8a52; --b-soft:#47291c; --win:#3fcf7f; --danger:#ff6b6b;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111318; --card:#1a1d24; --text:#e7e9ef; --muted:#9097a8; --line:#2a2f3a; --soft:#222631;
+  --a:#6b9bff; --a-soft:#1f2c47; --b:#ff8a52; --b-soft:#47291c; --win:#3fcf7f; --danger:#ff6b6b;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+header h1{font-size:20px;margin:0;flex:1;letter-spacing:-.01em}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:7px 11px;font:inherit;cursor:pointer}
+.btn:hover{background:var(--soft)}
+.seg{display:inline-flex;background:var(--soft);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font:inherit;padding:7px 12px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:600}
+.pa{color:var(--a)} .pb{color:var(--b)}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;text-align:center}
+.score .name{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+.score .num{font-size:44px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.score .sep{font-size:28px;color:var(--muted)}
+.sub{color:var(--muted);font-size:13px;text-align:center;margin-top:10px}
+.streak{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:999px;background:var(--soft);font-size:13px}
+.bar2{display:flex;height:8px;border-radius:99px;overflow:hidden;margin-top:12px;background:var(--soft)}
+.bar2 div{height:100%}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
+.updated{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+tr:last-child td{border-bottom:0}
+.cmp td:first-child{color:var(--muted)}
+.cmp td.r{font-weight:600;width:28%}
+.better{color:var(--win)}
+.dist{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;align-items:end;height:150px;padding-top:6px}
+.dcol{display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+.dbars{display:flex;gap:3px;align-items:flex-end;height:100%;width:100%;justify-content:center}
+.dbar{width:42%;max-width:22px;border-radius:5px 5px 0 0;min-height:2px;position:relative}
+.dbar span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+.dlab{font-size:12px;color:var(--muted);margin-top:4px}
+.legend{display:flex;gap:14px;font-size:13px;margin-bottom:6px;flex-wrap:wrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.games{display:flex;flex-direction:column;gap:8px}
+.g{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ghead{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.gbody{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.side{border-radius:10px;padding:8px 10px;background:var(--soft);min-width:0}
+.side.win{outline:2px solid var(--win)}
+.side .who{font-size:12px;font-weight:600;display:flex;justify-content:space-between;gap:6px}
+.side .hero{font-weight:600;margin-top:2px;overflow-wrap:anywhere}
+.side .meta{font-size:12px;color:var(--muted)}
+.place{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:8px;font-weight:800;font-size:14px;background:var(--card);border:1px solid var(--line)}
+.p1{background:#f2c94c;color:#3a2c00;border-color:transparent}
+.p2,.p3,.p4{background:var(--a-soft);border-color:transparent}
+.crown{color:var(--win);font-weight:700}
+.na{color:var(--muted);font-style:italic;font-size:13px;margin-top:4px}
+.tag{font-size:11px;padding:1px 6px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--muted)}
+.del{border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;padding:4px 6px;border-radius:6px}
+.del:hover{color:var(--danger);background:var(--soft)}
+.more{border:0;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:12px;padding:4px 0;margin-top:6px}
+.details{margin-top:8px;font-size:13px;display:none}
+.g.open .details{display:block}
+.details ul{margin:4px 0 8px;padding-left:18px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+.err{background:var(--b-soft);border-radius:10px;padding:10px;margin-bottom:12px;display:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){ .grid2{grid-template-columns:1fr} }
+@media (max-width:460px){
+  .wrap{padding:12px 16px 40px}
+  .score .num{font-size:36px}
+  .gbody{grid-template-columns:1fr}
+  th,td{padding:7px 4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Battlegrounds statistika</h1>
+    <button class="btn" id="theme" title="Tema">Tema: auto</button>
+  </header>
+  <div class="err" id="err"></div>
+  <div id="app"><div class="empty">Učitavanje…</div></div>
+</div>
+<script>
+(function(){
+var RACES={BEAST:'Zveri',DEMON:'Demoni',DRAGON:'Zmajevi',MECHANICAL:'Mehovi',MECH:'Mehovi',MURLOC:'Murloci',PIRATE:'Pirati',
+  ELEMENTAL:'Elementali',QUILBOAR:'Kvilboari',NAGA:'Nage',UNDEAD:'Nemrtvi',ABERRATION:'Aberacije',ALL:'Svi tipovi',MIXED:'Mešano'};
+var SERVER='https://script.google.com/macros/s/AKfycbxb6479VB_5rPAxIpuE5uW3zy7kVhzDEGq1iMOGcQm-dSL1KZlsol7PQaLqL06o-AM/exec';
+var GAS=!!(window.google&&google.script&&google.script.run);
+var state={data:null,mode:'shared',open:{},updated:null};
+try{ var m=localStorage.getItem('bg_mode'); if(m==='all'||m==='shared') state.mode=m; }catch(e){}
+
+// ---------- theme ----------
+var themes=['auto','light','dark'], tnames={auto:'auto',light:'svetla',dark:'tamna'};
+var theme='auto'; try{ theme=localStorage.getItem('bg_theme')||'auto'; }catch(e){}
+function applyTheme(){
+  if(theme==='auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',theme);
+  document.getElementById('theme').textContent='Tema: '+tnames[theme];
+}
+document.getElementById('theme').onclick=function(){
+  theme=themes[(themes.indexOf(theme)+1)%3]; try{localStorage.setItem('bg_theme',theme);}catch(e){} applyTheme();
+};
+applyTheme();
+
+// ---------- helpers ----------
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function shortName(p){return String(p||'').split('#')[0];}
+function race(r){ if(!r) return '—'; return RACES[r]||(r.charAt(0)+r.slice(1).toLowerCase()); }
+function pad(n){return (n<10?'0':'')+n;}
+function fmtDate(iso){ var d=new Date(iso); if(isNaN(d)) return ''; return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear()+'. '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function avg(a){ if(!a.length) return null; var s=0; a.forEach(function(x){s+=x;}); return s/a.length; }
+function f2(x){ return x==null?'—':x.toFixed(2).replace('.',','); }
+function pct(x){ return x==null?'—':Math.round(x*100)+' %'; }
+function mostCommon(list){ var c={},best=null,n=0; list.forEach(function(h){c[h]=(c[h]||0)+1; if(c[h]>n){n=c[h];best=h;}}); return best?best+' ('+n+')':'—'; }
+
+// ---------- model ----------
+function build(data){
+  var games=data.games||[];
+  var cnt={}; games.forEach(function(g){ cnt[g.player]=(cnt[g.player]||0)+1; });
+  var players=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] || (a<b?-1:1); }).slice(0,2);
+  var bySeed={};
+  games.forEach(function(g){
+    var s=bySeed[g.seed]||(bySeed[g.seed]={seed:g.seed,end:g.end,own:{}});
+    s.own[g.player]=g; if(g.end>s.end) s.end=g.end;
+  });
+  var groups=Object.keys(bySeed).map(function(k){return bySeed[k];});
+  groups.forEach(function(G){
+    G.e={};
+    players.forEach(function(p){
+      var g=G.own[p];
+      if(g){ G.e[p]={hero:g.hero,place:g.place,exact:true,comp:g.comp,tier:g.tier,turns:g.turns,rec:g}; return; }
+      // fallback: find this player in the other player's lobby by name
+      var sn=shortName(p).toLowerCase();
+      players.forEach(function(o){
+        if(o===p||G.e[p]) return; var og=G.own[o]; if(!og||!og.lobby) return;
+        og.lobby.forEach(function(l){
+          if(!G.e[p] && l.name && l.name.toLowerCase()===sn) G.e[p]={hero:l.hero,place:l.place,exact:!!l.exact,inferred:true,from:o,ref:og.place};
+        });
+      });
+    });
+    G.shared = players.length===2 && G.e[players[0]] && G.e[players[1]];
+    if(G.shared){
+      var a=G.e[players[0]], b=G.e[players[1]];
+      G.winner = a.place<b.place?players[0]:(b.place<a.place?players[1]:null);
+    }
+  });
+  groups.sort(function(x,y){ return x.end<y.end?1:-1; });
+  return {players:players,groups:groups};
+}
+
+function statsFor(model,p,mode){
+  var list=[];
+  model.groups.forEach(function(G){ if(mode==='shared'&&!G.shared) return; if(G.e[p]) list.push(G.e[p]); });
+  var places=list.map(function(e){return e.place;});
+  var dist=[0,0,0,0,0,0,0,0]; places.forEach(function(x){ if(x>=1&&x<=8) dist[x-1]++; });
+  return {n:list.length, avg:avg(places), top4:list.length?places.filter(function(x){return x<=4;}).length/list.length:null,
+    first:places.filter(function(x){return x===1;}).length, hero:mostCommon(list.map(function(e){return e.hero;})),
+    dist:dist, list:list};
+}
+
+function groupTable(model,mode,key){
+  var rows={};
+  model.groups.forEach(function(G){
+    if(mode==='shared'&&!G.shared) return;
+    model.players.forEach(function(p,i){
+      var e=G.e[p]; if(!e) return; var k=e[key]; if(key==='comp'){ if(!e.rec) return; k=race(k); }
+      if(!k) return;
+      var r=rows[k]||(rows[k]={k:k,c:[[],[]]}); r.c[i].push(e.place);
+    });
+  });
+  return Object.keys(rows).map(function(k){return rows[k];}).sort(function(a,b){
+    return (b.c[0].length+b.c[1].length)-(a.c[0].length+a.c[1].length) || (a.k<b.k?-1:1);
+  });
+}
+
+// ---------- render ----------
+function render(){
+  var app=document.getElementById('app');
+  if(!state.data){ return; }
+  var M=build(state.data), P=M.players, mode=state.mode;
+  if(!P.length){ app.innerHTML='<div class="card empty">Još nema zabeleženih partija. Odigrajte jednu partiju Battlegrounds-a i statistika će se pojaviti ovde sama.</div>'; return; }
+  var A=P[0], B=P[1], h='';
+  var cls=['pa','pb'];
+
+  // head to head
+  var shared=M.groups.filter(function(G){return G.shared;});
+  var wa=0,wb=0; shared.forEach(function(G){ if(G.winner===A) wa++; else if(G.winner===B) wb++; });
+  var streakP=null, streakN=0;
+  for(var i=0;i<shared.length;i++){ var w=shared[i].winner; if(!w) break; if(streakP===null){streakP=w;streakN=1;} else if(w===streakP) streakN++; else break; }
+  h+='<div class="card"><h2>Međusobni skor</h2>';
+  if(B){
+    h+='<div class="score"><div><div class="name pa">'+esc(shortName(A))+'</div></div><div></div><div><div class="name pb">'+esc(shortName(B))+'</div></div>'+
+       '<div class="num pa">'+wa+'</div><div class="sep">:</div><div class="num pb">'+wb+'</div></div>';
+    var tot=wa+wb;
+    h+='<div class="bar2"><div style="width:'+(tot?wa/tot*100:50)+'%;background:var(--a)"></div><div style="width:'+(tot?wb/tot*100:50)+'%;background:var(--b)"></div></div>';
+    h+='<div class="sub">'+shared.length+' zajedničk'+(shared.length%10===1&&shared.length%100!==11?'a partija':'ih partija')+' · bolje plasiran pobeđuje';
+    if(streakP) h+='<br><span class="streak">Trenutni niz: <b class="'+(streakP===A?'pa':'pb')+'">'+esc(shortName(streakP))+'</b> '+streakN+'× zaredom</span>';
+    h+='</div>';
+  } else {
+    h+='<div class="sub">Čeka se prvi zapis drugog igrača. Čim brat odigra partiju sa instaliranim trackerom, ovde se pojavljuje međusobni skor.</div>';
+  }
+  h+='</div>';
+
+  // toolbar
+  h+='<div class="toolbar"><div class="seg"><button data-mode="shared" class="'+(mode==='shared'?'on':'')+'">Zajedničke partije</button><button data-mode="all" class="'+(mode==='all'?'on':'')+'">Sve partije</button></div>'+
+     '<span class="updated" id="upd"></span></div>';
+
+  var S=P.map(function(p){return statsFor(M,p,mode);});
+
+  // comparison
+  h+='<div class="card"><h2>Poređenje</h2><div class="tablewrap"><table class="cmp"><tr><th></th>'+P.map(function(p,i){return '<th class="r '+cls[i]+'">'+esc(shortName(p))+'</th>';}).join('')+'</tr>';
+  function rowCmp(label,vals,fmt,lowerBetter){
+    var best=null;
+    if(vals.length===2&&vals[0]!=null&&vals[1]!=null&&vals[0]!==vals[1]) best=(lowerBetter?(vals[0]<vals[1]?0:1):(vals[0]>vals[1]?0:1));
+    return '<tr><td>'+label+'</td>'+vals.map(function(v,i){return '<td class="r'+(best===i?' better':'')+'">'+fmt(v)+'</td>';}).join('')+'</tr>';
+  }
+  var id=function(x){return x==null?'—':String(x);};
+  h+=rowCmp('Broj partija',S.map(function(s){return s.n;}),id,false).replace(' better','');
+  h+=rowCmp('Prosečan plasman',S.map(function(s){return s.avg;}),f2,true);
+  h+=rowCmp('Top 4',S.map(function(s){return s.top4;}),pct,false);
+  h+=rowCmp('Prva mesta',S.map(function(s){return s.first;}),id,false);
+  h+='<tr><td>Najčešći heroj</td>'+S.map(function(s){return '<td class="r">'+esc(s.hero)+'</td>';}).join('')+'</tr>';
+  h+='</table></div>';
+  if(S.some(function(s){return s.list.some(function(e){return e.inferred&&!e.exact;});}))
+    h+='<div class="note">~ plasman preuzet iz zapisa drugog igrača; tačan plasman nije poznat (igrač je bio živ kad je drugi ispao).</div>';
+  h+='</div>';
+
+  // distribution
+  var maxD=1; S.forEach(function(s){ s.dist.forEach(function(x){ if(x>maxD) maxD=x; }); });
+  h+='<div class="card"><h2>Raspodela plasmana</h2><div class="legend">'+P.map(function(p,i){return '<span><i class="dot" style="background:var(--'+(i?'b':'a')+')"></i>'+esc(shortName(p))+'</span>';}).join('')+'</div><div class="dist">';
+  for(var k=0;k<8;k++){
+    h+='<div class="dcol"><div class="dbars">'+S.map(function(s,i){ var v=s.dist[k]; return '<div class="dbar" style="height:'+(v/maxD*100*0.85)+'%;background:var(--'+(i?'b':'a')+')"><span>'+(v||'')+'</span></div>'; }).join('')+'</div><div class="dlab">'+(k+1)+'.</div></div>';
+  }
+  h+='</div></div>';
+
+  // hero + comp tables
+  function tbl(title,rows,first){
+    var t='<div class="card"><h2>'+title+'</h2>';
+    if(!rows.length) return t+'<div class="empty">Nema podataka.</div></div>';
+    t+='<div class="tablewrap"><table><tr><th>'+first+'</th>'+P.map(function(p,i){return '<th class="r '+cls[i]+'">'+esc(shortName(p))+'<br><span style="font-weight:400">partije · prosek</span></th>';}).join('')+'</tr>';
+    rows.forEach(function(r){
+      t+='<tr><td>'+esc(r.k)+'</td>'+P.map(function(p,i){ var c=r.c[i]; return '<td class="r">'+(c.length?c.length+' · '+f2(avg(c)):'<span style="color:var(--muted)">—</span>')+'</td>'; }).join('')+'</tr>';
+    });
+    return t+'</table></div></div>';
+  }
+  h+='<div class="grid2">'+tbl('Heroji',groupTable(M,mode,'hero'),'Heroj')+tbl('Kompozicije',groupTable(M,mode,'comp'),'Tip')+'</div>';
+
+  // history
+  var hist=M.groups.filter(function(G){ return mode==='all' || G.shared; });
+  h+='<div class="card"><h2>Istorija partija ('+hist.length+')</h2>';
+  if(!hist.length) h+='<div class="empty">'+(mode==='shared'?'Još nema zajedničkih partija. Prebaci na „Sve partije“.':'Nema partija.')+'</div>';
+  h+='<div class="games">';
+  hist.forEach(function(G){
+    h+='<div class="g'+(state.open[G.seed]?' open':'')+'" data-seed="'+esc(G.seed)+'"><div class="ghead"><span>'+fmtDate(G.end)+'</span><button class="del" data-del="'+esc(G.seed)+'" title="Obriši partiju">Obriši</button></div><div class="gbody">';
+    P.forEach(function(p,i){
+      var e=G.e[p];
+      h+='<div class="side'+(G.winner===p?' win':'')+'"><div class="who"><span class="'+cls[i]+'">'+esc(shortName(p))+'</span>'+(G.winner===p?'<span class="crown">pobeda</span>':'')+'</div>';
+      if(!e){ h+='<div class="na">nije u ovoj partiji / nema zapisa</div></div>'; return; }
+      var pl=e.place, pc=(pl>=1&&pl<=4)?' p'+pl:'';
+      h+='<div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="place'+pc+'" title="'+(e.exact?'':'tačan plasman nije poznat')+'">'+(e.exact?'':'~')+pl+'.</span><div style="min-width:0"><div class="hero">'+esc(e.hero)+'</div>';
+      if(e.inferred) h+='<div class="meta">iz zapisa igrača '+esc(shortName(e.from))+(e.exact?'':' · tačan plasman nepoznat')+'</div>';
+      else h+='<div class="meta">'+esc(race(e.comp))+' · tier '+(e.tier||'?')+' · potez '+(e.turns||'?')+'</div>';
+      h+='</div></div></div>';
+    });
+    h+='</div><button class="more" data-more="'+esc(G.seed)+'">'+(state.open[G.seed]?'Sakrij detalje':'Detalji')+'</button><div class="details">';
+    P.forEach(function(p,i){
+      var g=G.own[p]; if(!g) return;
+      h+='<div><b class="'+cls[i]+'">'+esc(shortName(p))+'</b> — tabla na kraju:</div><ul>'+((g.minions||[]).map(function(m){return '<li>'+esc(m.name)+(m.golden?' <span class="tag">zlatni</span>':'')+(m.race&&m.race!=='INVALID'?' <span class="tag">'+esc(race(m.race))+'</span>':'')+'</li>';}).join('')||'<li>—</li>')+'</ul>';
+      h+='<div>Lobi (iz zapisa '+esc(shortName(p))+'):</div><ul>'+(g.lobby||[]).map(function(l){return '<li>'+(l.exact?'':'~')+l.place+'. '+esc(l.hero)+(l.name?' — '+esc(l.name):'')+'</li>';}).join('')+'</ul>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div></div>';
+  app.innerHTML=h;
+  showUpdated();
+}
+
+function showUpdated(){ var u=document.getElementById('upd'); if(u&&state.updated) u.textContent='Osveženo '+pad(state.updated.getHours())+':'+pad(state.updated.getMinutes())+':'+pad(state.updated.getSeconds()); }
+
+document.getElementById('app').addEventListener('click',function(ev){
+  var t=ev.target.closest('button'); if(!t) return;
+  if(t.dataset.mode){ state.mode=t.dataset.mode; try{localStorage.setItem('bg_mode',state.mode);}catch(e){} render(); }
+  else if(t.dataset.more){ var s=t.dataset.more; state.open[s]=!state.open[s]; render(); }
+  else if(t.dataset.del){
+    var seed=t.dataset.del;
+    if(!GAS&&!window.__TEST_DATA){
+      if(confirm('Brisanje partija radi na Google verziji sajta. Otvoriti je u novom prozoru?')) window.open(SERVER,'_blank');
+      return;
+    }
+    if(!confirm('Obrisati ovu partiju za oba igrača? Ovo ne može da se poništi.')) return;
+    t.disabled=true; t.textContent='Brisanje…';
+    call('deleteGame',seed).then(gotData,showErr);
+  }
+});
+
+// ---------- data ----------
+function call(fn,arg){
+  return new Promise(function(res,rej){
+    if(window.google&&google.script&&google.script.run){
+      var r=google.script.run.withSuccessHandler(res).withFailureHandler(rej);
+      if(arg===undefined) r[fn](); else r[fn](arg);
+    } else if(window.__TEST_DATA){ res(window.__TEST_DATA); }
+    else if(fn==='getData'){
+      fetch(SERVER+'?api=data',{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(res,rej);
+    }
+    else rej(new Error('Nema veze sa serverom'));
+  });
+}
+function gotData(d){
+  document.getElementById('err').style.display='none';
+  var sig=JSON.stringify(d.games);
+  state.updated=new Date();
+  if(sig!==state.sig){ state.sig=sig; state.data=d; render(); } else showUpdated();
+}
+function showErr(e){
+  var el=document.getElementById('err'); el.style.display='block';
+  el.textContent='Ne mogu da učitam podatke: '+((e&&e.message)||e)+'. Pokušavam ponovo…';
+  if(!state.data) document.getElementById('app').innerHTML='';
+}
+function load(){ call('getData').then(gotData,showErr); }
+load();
+setInterval(function(){ if(!document.hidden) load(); },30000);
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) load(); });
+})();
+</script>
+</body>
+</html>
