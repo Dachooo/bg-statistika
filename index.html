@@ -203,7 +203,7 @@ function groupTable(model,mode,key){
 function render(){
   var app=document.getElementById('app');
   if(!state.data){ return; }
-  var M=build(state.data), P=M.players, mode=state.mode;
+  var M=build(state.data), P=M.players, mode=P.length<2?'all':state.mode;
   if(!P.length){ app.innerHTML='<div class="card empty">Još nema zabeleženih partija. Odigrajte jednu partiju Battlegrounds-a i statistika će se pojaviti ovde sama.</div>'; return; }
   var A=P[0], B=P[1], h='';
   var cls=['pa','pb'];
